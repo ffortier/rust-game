@@ -1,0 +1,8 @@
+{
+    "classDeclarations": {
+        "Game": {
+            "extends": "EventTarget",
+            "postConstructible": true
+        }
+    }
+}
