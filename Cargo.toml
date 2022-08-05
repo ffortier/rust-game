@@ -27,6 +27,7 @@ features = [
     "MouseEvent",
     "KeyboardEvent",
     "HtmlCanvasElement",
+    "HtmlImageElement",
     "CanvasRenderingContext2d",
     "Window",
     "Document",

@@ -9,7 +9,8 @@ use super::renderer::Renderer;
 #[derive(Debug, Default)]
 pub struct GameLogic {
     last_frame_time: f64,
-    direction: f64,
+    rotation_x: f64,
+    rotation_y: f64,
 }
 
 #[derive(Debug)]
@@ -47,24 +48,39 @@ impl GameLogic {
 
             match key {
                 ControlKey::ArrowUp => {
-                    self.direction = std::f64::consts::FRAC_PI_2;
+                    self.rotation_y = 1.0;
                 }
                 ControlKey::ArrowDown => {
-                    self.direction = std::f64::consts::FRAC_PI_2 + std::f64::consts::PI;
+                    self.rotation_y = -1.0;
                 }
                 ControlKey::ArrowLeft => {
-                    self.direction = std::f64::consts::PI;
+                    self.rotation_x = -1.0;
                 }
                 ControlKey::ArrowRight => {
-                    self.direction = 0.0;
+                    self.rotation_x = 1.0;
                 }
             }
         }
     }
 
     pub fn on_keyup(&mut self, event: &KeyboardEvent) {
-        if let Ok(_) = event.key().parse::<ControlKey>() {
+        if let Ok(key) = event.key().parse::<ControlKey>() {
             event.prevent_default();
+
+            match key {
+                ControlKey::ArrowUp => {
+                    self.rotation_y = 0.0;
+                }
+                ControlKey::ArrowDown => {
+                    self.rotation_y = 0.0;
+                }
+                ControlKey::ArrowLeft => {
+                    self.rotation_x = 0.0;
+                }
+                ControlKey::ArrowRight => {
+                    self.rotation_x = 0.0;
+                }
+            }
         }
     }
 
@@ -72,13 +88,49 @@ impl GameLogic {
         self.last_frame_time = Date::now();
     }
 
-    pub fn update(&mut self) {
-        let delta = self.compute_delta();
-    }
-
     pub fn draw(&mut self, renderer: &mut Renderer) {
+        let _delta = self.compute_delta();
+
+        if self.rotation_x != 0.0 && self.rotation_y != 0.0 {
+            renderer.rotate_z(0.1 * self.rotation_y);
+        } else if self.rotation_x != 0.0 {
+            renderer.rotate_x(0.1 * self.rotation_x);
+        } else if self.rotation_y != 0.0 {
+            renderer.rotate_y(0.1 * self.rotation_y);
+        }
+
         renderer.clear_frame();
-        renderer.draw_arrow(self.direction);
+
+        let p1 = (-50, -50, -50);
+        let p2 = (50, -50, -50);
+        let p3 = (50, 50, -50);
+        let p4 = (-50, 50, -50);
+        let p5 = (-50, -50, 50);
+        let p6 = (50, -50, 50);
+        let p7 = (50, 50, 50);
+        let p8 = (-50, 50, 50);
+
+        renderer.point(&p1);
+        renderer.point(&p2);
+        renderer.point(&p3);
+        renderer.point(&p4);
+        renderer.point(&p5);
+        renderer.point(&p6);
+        renderer.point(&p7);
+        renderer.point(&p8);
+
+        renderer.line(&p1, &p2);
+        renderer.line(&p2, &p3);
+        renderer.line(&p3, &p4);
+        renderer.line(&p4, &p1);
+        renderer.line(&p5, &p6);
+        renderer.line(&p6, &p7);
+        renderer.line(&p7, &p8);
+        renderer.line(&p8, &p5);
+        renderer.line(&p1, &p5);
+        renderer.line(&p2, &p6);
+        renderer.line(&p3, &p7);
+        renderer.line(&p4, &p8);
     }
 
     pub fn is_running(&self) -> bool {

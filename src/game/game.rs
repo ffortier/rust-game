@@ -15,8 +15,9 @@ pub struct Game {
     request_id: Rc<RefCell<Option<i32>>>,
     game_logic: Rc<RefCell<GameLogic>>,
     renderer: Rc<RefCell<Renderer>>,
-    _keydown_handler: EventHandler,
-    _keyup_handler: EventHandler,
+    keydown_handler: Option<EventHandler>,
+    keyup_handler: Option<EventHandler>,
+    animation_frame_callback: Rc<RefCell<Option<Closure<dyn FnMut()>>>>,
 }
 
 #[wasm_bindgen]
@@ -36,27 +37,9 @@ impl Game {
             canvas.width(),
             canvas.height(),
         )));
-        
+
         let canvas = Rc::new(canvas);
         let game_logic = Rc::new(RefCell::new(GameLogic::default()));
-
-        let keydown_handler = {
-            let game_logic = game_logic.clone();
-            let window = Rc::new(window().unwrap_throw());
-
-            EventHandler::new(window, "keydown", move |event| {
-                game_logic.borrow_mut().on_keydown(event.unchecked_ref());
-            })
-        };
-
-        let keyup_handler = {
-            let game_logic = game_logic.clone();
-            let window = Rc::new(window().unwrap_throw());
-
-            EventHandler::new(window, "keyup", move |event| {
-                game_logic.borrow_mut().on_keyup(event.unchecked_ref());
-            })
-        };
 
         Self {
             canvas,
@@ -64,8 +47,9 @@ impl Game {
             request_id: Rc::new(RefCell::new(None)),
             game_logic,
             renderer,
-            _keydown_handler: keydown_handler,
-            _keyup_handler: keyup_handler,
+            keydown_handler: None,
+            keyup_handler: None,
+            animation_frame_callback: Rc::new(RefCell::new(None)),
         }
     }
 
@@ -75,11 +59,10 @@ impl Game {
         }
 
         self.game_logic.borrow_mut().setup();
+        self.attach_event_handlers();
 
-        let cb = Rc::new(RefCell::new(None));
-
-        cb.replace(Some({
-            let cb = cb.clone();
+        self.animation_frame_callback.replace(Some({
+            let cb = self.animation_frame_callback.clone();
             let game_logic = self.game_logic.clone();
             let renderer = self.renderer.clone();
             let request_id = self.request_id.clone();
@@ -92,7 +75,6 @@ impl Game {
                         .unwrap_throw();
                 }
 
-                game_logic.borrow_mut().update();
                 game_logic.borrow_mut().draw(&mut renderer.borrow_mut());
 
                 if game_logic.borrow().is_running() {
@@ -107,7 +89,9 @@ impl Game {
 
         self.request_id
             .borrow_mut()
-            .replace(request_animation_frame(cb.borrow().as_ref().unwrap()));
+            .replace(request_animation_frame(
+                self.animation_frame_callback.borrow().as_ref().unwrap(),
+            ));
 
         if let Some(event_target) = self.event_target.borrow().as_ref() {
             event_target
@@ -122,6 +106,9 @@ impl Game {
     }
 
     pub fn stop(&mut self) {
+        self.detach_event_handlers();
+        self.animation_frame_callback.take();
+
         if let Some(request_id) = self.request_id.borrow_mut().take() {
             cancel_animation_frame(request_id);
 
@@ -131,6 +118,34 @@ impl Game {
                     .unwrap_throw();
             }
         }
+    }
+
+    fn attach_event_handlers(&mut self) {
+        let keydown_handler = {
+            let game_logic = self.game_logic.clone();
+            let window = Rc::new(window().unwrap_throw());
+
+            EventHandler::new(window, "keydown", move |event| {
+                game_logic.borrow_mut().on_keydown(event.unchecked_ref());
+            })
+        };
+
+        let keyup_handler = {
+            let game_logic = self.game_logic.clone();
+            let window = Rc::new(window().unwrap_throw());
+
+            EventHandler::new(window, "keyup", move |event| {
+                game_logic.borrow_mut().on_keyup(event.unchecked_ref());
+            })
+        };
+
+        self.keydown_handler.replace(keydown_handler);
+        self.keyup_handler.replace(keyup_handler);
+    }
+
+    fn detach_event_handlers(&mut self) {
+        self.keydown_handler.take();
+        self.keyup_handler.take();
     }
 
     #[wasm_bindgen(skip_typescript, js_name = __postConstruct)]
@@ -152,7 +167,7 @@ fn create_canvas(container: Option<HtmlElement>) -> Result<HtmlCanvasElement, In
     let document = window.document().ok_or(InitError::NoDocument)?;
     let canvas = document
         .create_element("canvas")
-        .map_err(|err| InitError::CanvasCreationFailed(format!("{err:?}")))?
+        .map_err(|err| InitError::ElementCreationFailed(format!("{err:?}")))?
         .unchecked_into::<HtmlCanvasElement>();
 
     canvas.set_width(480);

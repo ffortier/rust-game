@@ -72,4 +72,29 @@ mod tests {
 
         assert_eq!(*count2.borrow(), 2, "expected 2");
     }
+
+    #[wasm_bindgen_test]
+    fn test_remove_callback() {
+        let count = Rc::new(RefCell::new(0));
+        let test_target = Rc::new(EventTarget::new().unwrap_throw());
+
+        {
+            let count = count.clone();
+
+            let _handler = EventHandler::new(test_target.clone(), "test", move |event| {
+                event.prevent_default();
+                *count.borrow_mut() += 1;
+            });
+
+            let event = Event::new("test").unwrap_throw();
+
+            test_target.dispatch_event(&event).unwrap_throw();
+        }
+
+        let event = Event::new("test").unwrap_throw();
+
+        test_target.dispatch_event(&event).unwrap_throw();
+
+        assert_eq!(*count.borrow(), 1, "expected 1");
+    }
 }
