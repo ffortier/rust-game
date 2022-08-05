@@ -101,36 +101,26 @@ impl GameLogic {
 
         renderer.clear_frame();
 
-        let p1 = (-50, -50, -50);
-        let p2 = (50, -50, -50);
-        let p3 = (50, 50, -50);
-        let p4 = (-50, 50, -50);
-        let p5 = (-50, -50, 50);
-        let p6 = (50, -50, 50);
-        let p7 = (50, 50, 50);
-        let p8 = (-50, 50, 50);
+        let points = [
+            (-50, -50, -50),
+            (50, -50, -50),
+            (50, 50, -50),
+            (-50, 50, -50),
+            (-50, -50, 50),
+            (50, -50, 50),
+            (50, 50, 50),
+            (-50, 50, 50),
+        ];
 
-        renderer.point(&p1);
-        renderer.point(&p2);
-        renderer.point(&p3);
-        renderer.point(&p4);
-        renderer.point(&p5);
-        renderer.point(&p6);
-        renderer.point(&p7);
-        renderer.point(&p8);
+        for point in points {
+            renderer.point(&point);
+        }
 
-        renderer.line(&p1, &p2);
-        renderer.line(&p2, &p3);
-        renderer.line(&p3, &p4);
-        renderer.line(&p4, &p1);
-        renderer.line(&p5, &p6);
-        renderer.line(&p6, &p7);
-        renderer.line(&p7, &p8);
-        renderer.line(&p8, &p5);
-        renderer.line(&p1, &p5);
-        renderer.line(&p2, &p6);
-        renderer.line(&p3, &p7);
-        renderer.line(&p4, &p8);
+        for i in 0..4 {
+            renderer.line(&points[i], &points[(i + 1) % 4]);
+            renderer.line(&points[i + 4], &points[(i + 1) % 4 + 4]);
+            renderer.line(&points[i], &points[i + 4]);
+        }
     }
 
     pub fn is_running(&self) -> bool {
