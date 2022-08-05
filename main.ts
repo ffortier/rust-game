@@ -1,5 +1,10 @@
+import { provideFASTDesignSystem, allComponents, neutralLayer1, fillColor } from '@microsoft/fast-components';
 import init, { Game } from 'rust-game';
 import './styles.css';
+
+provideFASTDesignSystem().register(allComponents);
+
+fillColor.setValueFor(document.body, neutralLayer1.getValueFor(document.body));
 
 const filterStrength = 20;
 
@@ -22,9 +27,12 @@ setInterval(() => {
 init().then(() => {
     const game = new Game({
         devMode: true,
+        container: document.getElementById("game") ?? undefined,
     });
 
     game.addEventListener('frame', measureFPS)
 
-    game.run();
+    document.getElementById('run')?.addEventListener('click', () => game.run());
+    document.getElementById('stop')?.addEventListener('click', () => game.stop());
+    document.getElementById('reset')?.addEventListener('click', () => game.reset());
 });

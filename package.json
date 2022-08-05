@@ -17,5 +17,8 @@
   },
   "workspaces": [
     "pkg"
-  ]
+  ],
+  "dependencies": {
+    "@microsoft/fast-components": "^2.30.6"
+  }
 }

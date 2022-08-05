@@ -1,5 +1,15 @@
 canvas {
-    zoom: 150%;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
+}
+
+body {
+    background-color: var(--fill-color);
+    color: var(--neutral-foreground-rest);
+    font-family: var(--body-font);
+}
+
+#container {
+    margin: auto;
+    width: 480px;
 }

@@ -9,8 +9,17 @@
 </head>
 
 <body>
-    <script type="module" src="main.ts"></script>
-    <div id="fps"></div>
+    <div id="container">
+        <script type="module" src="main.ts"></script>
+        <fast-toolbar>
+            <fast-button type="button" id="run">Run</fast-button>
+            <fast-button type="button" id="stop">Stop</fast-button>
+            <fast-button type="button" id="reset">Reset</fast-button>
+            <fast-divider orientation="vertical" role="separator"></fast-divider>
+            <div id="fps"></div>
+        </fast-toolbar>
+        <div id="game"></div>
+    </div>
 </body>
 
 </html>
