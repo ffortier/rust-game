@@ -4,13 +4,16 @@ use js_sys::Date;
 use thiserror::Error;
 use web_sys::KeyboardEvent;
 
-use super::renderer::Renderer;
+use super::{math::Vec4, renderer::Renderer};
 
 #[derive(Debug, Default)]
 pub struct GameLogic {
     last_frame_time: f64,
+    rotate_x: f64,
+    rotate_y: f64,
     rotation_x: f64,
     rotation_y: f64,
+    rotation_z: f64,
 }
 
 #[derive(Debug)]
@@ -48,16 +51,16 @@ impl GameLogic {
 
             match key {
                 ControlKey::ArrowUp => {
-                    self.rotation_y = 1.0;
+                    self.rotate_y = 1.0;
                 }
                 ControlKey::ArrowDown => {
-                    self.rotation_y = -1.0;
+                    self.rotate_y = -1.0;
                 }
                 ControlKey::ArrowLeft => {
-                    self.rotation_x = -1.0;
+                    self.rotate_x = -1.0;
                 }
                 ControlKey::ArrowRight => {
-                    self.rotation_x = 1.0;
+                    self.rotate_x = 1.0;
                 }
             }
         }
@@ -69,16 +72,16 @@ impl GameLogic {
 
             match key {
                 ControlKey::ArrowUp => {
-                    self.rotation_y = 0.0;
+                    self.rotate_y = 0.0;
                 }
                 ControlKey::ArrowDown => {
-                    self.rotation_y = 0.0;
+                    self.rotate_y = 0.0;
                 }
                 ControlKey::ArrowLeft => {
-                    self.rotation_x = 0.0;
+                    self.rotate_x = 0.0;
                 }
                 ControlKey::ArrowRight => {
-                    self.rotation_x = 0.0;
+                    self.rotate_x = 0.0;
                 }
             }
         }
@@ -86,40 +89,63 @@ impl GameLogic {
 
     pub fn setup(&mut self) {
         self.last_frame_time = Date::now();
+        self.rotate_x = 0.0;
+        self.rotate_y = 0.0;
+        self.rotation_x = 0.0;
+        self.rotation_y = 0.0;
+        self.rotation_z = 0.0;
     }
 
     pub fn draw(&mut self, renderer: &mut Renderer) {
         let _delta = self.compute_delta();
 
-        if self.rotation_x != 0.0 && self.rotation_y != 0.0 {
-            renderer.rotate_z(0.1 * self.rotation_y);
-        } else if self.rotation_x != 0.0 {
-            renderer.rotate_x(0.1 * self.rotation_x);
-        } else if self.rotation_y != 0.0 {
-            renderer.rotate_y(0.1 * self.rotation_y);
+        if self.rotate_x != 0.0 && self.rotate_y != 0.0 {
+            self.rotation_z += 0.1 * self.rotate_y;
+        } else if self.rotate_x != 0.0 {
+            self.rotation_x += 0.1 * self.rotate_x;
+        } else if self.rotate_y != 0.0 {
+            self.rotation_y += 0.1 * self.rotate_y;
         }
 
         renderer.clear_frame();
 
         let points = [
-            (-50, -50, -50),
-            (50, -50, -50),
-            (50, 50, -50),
-            (-50, 50, -50),
-            (-50, -50, 50),
-            (50, -50, 50),
-            (50, 50, 50),
-            (-50, 50, 50),
+            (0, 0, 0),
+            (1, 0, 0),
+            (1, 1, 0),
+            (0, 1, 0),
+            (0, 0, 1),
+            (1, 0, 1),
+            (1, 1, 1),
+            (0, 1, 1),
         ];
 
-        for point in points {
-            renderer.point(&point);
+        for (i, point) in points.into_iter().enumerate() {
+            renderer.point(&point, self.rotation_x, self.rotation_y, self.rotation_z);
         }
 
         for i in 0..4 {
-            renderer.line(&points[i], &points[(i + 1) % 4]);
-            renderer.line(&points[i + 4], &points[(i + 1) % 4 + 4]);
-            renderer.line(&points[i], &points[i + 4]);
+            renderer.line(
+                &points[i],
+                &points[(i + 1) % 4],
+                self.rotation_x,
+                self.rotation_y,
+                self.rotation_z,
+            );
+            renderer.line(
+                &points[i + 4],
+                &points[(i + 1) % 4 + 4],
+                self.rotation_x,
+                self.rotation_y,
+                self.rotation_z,
+            );
+            renderer.line(
+                &points[i],
+                &points[i + 4],
+                self.rotation_x,
+                self.rotation_y,
+                self.rotation_z,
+            );
         }
     }
 

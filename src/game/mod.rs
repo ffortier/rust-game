@@ -8,3 +8,4 @@ mod game;
 mod handler;
 mod logic;
 mod renderer;
+mod math;
